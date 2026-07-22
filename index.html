@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>7-11 專屬買賣合約產生器 V1.4</title>
+    <title>7-11 專屬買賣合約產生器 V1.5</title>
     
     <!-- 反快取咒語，強迫瀏覽器抓最新版 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -56,7 +56,7 @@
         .btn-outline-primary:hover, .btn-check:checked + .btn-outline-primary { background-color: #059669; color: white; border-color: #059669; }
         
         .form-control, .form-select, .input-group-text { border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: none; transition: all 0.2s; color: #334155; }
-        .form-control:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
+        .form-control:focus, .form-select:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
         .input-group-text { background-color: #f8fafc; }
         
         .alert-success { background-color: #f0fdf4; color: #166534; border: none; border-radius: 8px; }
@@ -151,8 +151,8 @@
             <div class="alert alert-success small py-3 mb-3 d-flex align-items-center">
                 <span style="font-size: 1.5rem; margin-right: 12px;">💡</span>
                 <div>
-                    <b>交貨日期/說明 (自由輸入)：</b>已復原至各品項右側！支援填寫「115/08/24」或「一取貨日1-2天前到貨」等文字。<br>
-                    為了讓 Word 表格產生「合併儲存格」的漂亮效果，<b>系統只會抓取「第一列」輸入的交貨說明</b>，填入最終合約中！
+                    <b>批次快速套用功能升級：</b>交貨日支援下拉選擇「日期」或「文字」，填寫完點擊「一鍵套用」即可自動覆蓋下方所有表格。<br>
+                    若選擇日期，系統會自動轉換為民國年格式！
                 </div>
             </div>
 
@@ -161,15 +161,20 @@
                 <div class="col-12 col-md-auto">
                     <div class="input-group input-group-sm">
                         <span class="input-group-text">公關品數量</span>
-                        <input type="number" id="bulkPrQty" class="form-control" style="max-width: 100px;" placeholder="輸入數量">
+                        <input type="number" id="bulkPrQty" class="form-control" style="max-width: 100px;">
                         <button class="btn btn-primary" onclick="applyBulkPrQty()">套用全部</button>
                     </div>
                 </div>
                 <div class="col-12 col-md-auto mt-2 mt-md-0">
                     <div class="input-group input-group-sm">
-                        <span class="input-group-text">交貨日期</span>
-                        <input type="date" id="bulkDate" class="form-control">
-                        <button class="btn btn-primary" onclick="applyBulkDate()">套用全部 (自動轉民國年)</button>
+                        <!-- 🎯 下拉式選單切換輸入類型 -->
+                        <select class="form-select fw-bold text-primary bg-light" id="bulkDateType" style="max-width: 90px;" onchange="toggleBulkDateInput()">
+                            <option value="date">日期</option>
+                            <option value="text">文字</option>
+                        </select>
+                        <input type="date" id="bulkDate_date" class="form-control">
+                        <input type="text" id="bulkDate_text" class="form-control" style="display:none;" value="">
+                        <button class="btn btn-primary" onclick="applyBulkDate()">一鍵套用</button>
                     </div>
                 </div>
                 <div class="col-12 col-md-auto mt-2 mt-md-0 ms-md-auto">
@@ -190,7 +195,8 @@
                     <div class="col-md-2"><label class="form-label text-muted small">數量</label><input type="number" class="form-control p-qty" value="" oninput="calculateTotals()"></div>
                     <div class="col-md-2"><label class="form-label text-muted small">單價(未稅)</label><input type="number" class="form-control p-price" value="" oninput="calculateTotals()"></div>
                     <div class="col-md-2"><label class="form-label text-muted small">公關品數量</label><input type="number" class="form-control p-prQty" value=""></div>
-                    <div class="col-md-2"><label class="form-label text-muted small">首批交貨日/說明</label><input type="text" class="form-control p-date" placeholder="日期或文字"></div>
+                    <!-- 🎯 確保這裡是純文字輸入框且空白 -->
+                    <div class="col-md-2"><label class="form-label text-muted small">首批交貨日/說明</label><input type="text" class="form-control p-date" value=""></div>
                     <div class="col-md-1 text-center"><span class="remove-btn" onclick="this.closest('.product-row').remove(); calculateTotals();">✖ 刪除</span></div>
                 </div>
             </div>
@@ -206,6 +212,17 @@
 </div>
 
 <script>
+    function toggleBulkDateInput() {
+        const type = document.getElementById('bulkDateType').value;
+        if (type === 'date') {
+            document.getElementById('bulkDate_date').style.display = 'block';
+            document.getElementById('bulkDate_text').style.display = 'none';
+        } else {
+            document.getElementById('bulkDate_date').style.display = 'none';
+            document.getElementById('bulkDate_text').style.display = 'block';
+        }
+    }
+
     function applyBulkPrQty() {
         const val = document.getElementById('bulkPrQty').value;
         if (val === "") { alert("請先輸入數量！"); return; }
@@ -213,15 +230,21 @@
     }
 
     function applyBulkDate() {
-        const val = document.getElementById('bulkDate').value;
-        if (val === "") { alert("請先選擇日期！"); return; }
+        const type = document.getElementById('bulkDateType').value;
+        let finalVal = "";
         
-        // 將 YYYY-MM-DD 轉為民國年 YYY/MM/DD
-        const parts = val.split('-');
-        const rocYear = parseInt(parts[0]) - 1911;
-        const formattedDate = `${rocYear}/${parts[1]}/${parts[2]}`;
+        if (type === 'date') {
+            const val = document.getElementById('bulkDate_date').value;
+            if (val === "") { alert("請先選擇日期！"); return; }
+            const parts = val.split('-');
+            const rocYear = parseInt(parts[0]) - 1911;
+            finalVal = `${rocYear}/${parts[1]}/${parts[2]}`;
+        } else {
+            finalVal = document.getElementById('bulkDate_text').value;
+            if (finalVal === "") { alert("請先輸入內容！"); return; }
+        }
         
-        document.querySelectorAll('.p-date').forEach(input => input.value = formattedDate);
+        document.querySelectorAll('.p-date').forEach(input => input.value = finalVal);
     }
 
     document.getElementById('productContainer').addEventListener('keydown', function(e) {
@@ -342,7 +365,7 @@
     calculateTotals();
 
     function addProduct(name='', qty='', price='', prQty='', date='') {
-        const html = `<div class="row g-2 mb-3 align-items-end product-row pb-3 border-bottom"><div class="col-md-3"><input type="text" class="form-control p-name" placeholder="品項名稱" value="${name}" oninput="calculateTotals()"></div><div class="col-md-2"><input type="number" class="form-control p-qty" placeholder="數量" oninput="calculateTotals()" value="${qty}"></div><div class="col-md-2"><input type="number" class="form-control p-price" placeholder="單價" oninput="calculateTotals()" value="${price}"></div><div class="col-md-2"><input type="number" class="form-control p-prQty" placeholder="公關品數量" value="${prQty}"></div><div class="col-md-2"><input type="text" class="form-control p-date" placeholder="日期或文字" value="${date}"></div><div class="col-md-1 text-center"><span class="remove-btn" onclick="this.closest('.product-row').remove(); calculateTotals();">✖ 刪除</span></div></div>`;
+        const html = `<div class="row g-2 mb-3 align-items-end product-row pb-3 border-bottom"><div class="col-md-3"><input type="text" class="form-control p-name" placeholder="品項名稱" value="${name}" oninput="calculateTotals()"></div><div class="col-md-2"><input type="number" class="form-control p-qty" placeholder="數量" oninput="calculateTotals()" value="${qty}"></div><div class="col-md-2"><input type="number" class="form-control p-price" placeholder="單價" oninput="calculateTotals()" value="${price}"></div><div class="col-md-2"><input type="number" class="form-control p-prQty" placeholder="公關品數量" value="${prQty}"></div><div class="col-md-2"><input type="text" class="form-control p-date" value="${date}"></div><div class="col-md-1 text-center"><span class="remove-btn" onclick="this.closest('.product-row').remove(); calculateTotals();">✖ 刪除</span></div></div>`;
         document.getElementById('productContainer').insertAdjacentHTML('beforeend', html);
     }
 
