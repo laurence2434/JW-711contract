@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>7-11 專屬買賣合約產生器 V1.3</title>
+    <title>7-11 專屬買賣合約產生器 V1.4</title>
     
     <!-- 反快取咒語，強迫瀏覽器抓最新版 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -151,7 +151,7 @@
             <div class="alert alert-success small py-3 mb-3 d-flex align-items-center">
                 <span style="font-size: 1.5rem; margin-right: 12px;">💡</span>
                 <div>
-                    <b>交貨日期/說明 (自由輸入)：</b>支援填寫「115/08/24」或「一取貨日1-2天前到貨」等文字。<br>
+                    <b>交貨日期/說明 (自由輸入)：</b>已復原至各品項右側！支援填寫「115/08/24」或「一取貨日1-2天前到貨」等文字。<br>
                     為了讓 Word 表格產生「合併儲存格」的漂亮效果，<b>系統只會抓取「第一列」輸入的交貨說明</b>，填入最終合約中！
                 </div>
             </div>
@@ -189,7 +189,7 @@
                     <div class="col-md-3"><label class="form-label text-muted small">品項名稱</label><input type="text" class="form-control p-name" value=""></div>
                     <div class="col-md-2"><label class="form-label text-muted small">數量</label><input type="number" class="form-control p-qty" value="" oninput="calculateTotals()"></div>
                     <div class="col-md-2"><label class="form-label text-muted small">單價(未稅)</label><input type="number" class="form-control p-price" value="" oninput="calculateTotals()"></div>
-                    <div class="col-md-2"><label class="form-label text-muted small">公關品</label><input type="number" class="form-control p-prQty" value=""></div>
+                    <div class="col-md-2"><label class="form-label text-muted small">公關品數量</label><input type="number" class="form-control p-prQty" value=""></div>
                     <div class="col-md-2"><label class="form-label text-muted small">首批交貨日/說明</label><input type="text" class="form-control p-date" placeholder="日期或文字"></div>
                     <div class="col-md-1 text-center"><span class="remove-btn" onclick="this.closest('.product-row').remove(); calculateTotals();">✖ 刪除</span></div>
                 </div>
@@ -298,7 +298,7 @@
                 cols[0] ? cols[0].trim() : '', 
                 cols[1] ? cols[1].replace(/,/g,'').trim() : '', 
                 cols[2] ? cols[2].replace(/,/g,'').trim() : '', 
-                cols[3] ? cols[3].replace(/,/g,'').trim() : '', 
+                cols[3] ? cols[3].replace(/,/g,'').trim() : '',
                 cols[4] ? cols[4].trim() : ''
             );
         });
@@ -327,7 +327,7 @@
             const qty = parseInt(row.querySelector('.p-qty').value || 0);
             const price = parseInt(row.querySelector('.p-price').value || 0);
             
-            if (name !== "" || qty > 0) itemCount++; // 計算有效款數
+            if (name !== "" || qty > 0) itemCount++; 
             
             totalQty += qty; 
             totalAmt += (qty * price);
@@ -401,6 +401,15 @@
             const items = [];
             const pr_items = [];
             
+            // 找出第一筆有填寫交貨日期的文字，作為合併儲存格的代表文字
+            let globalDeliveryText = "";
+            document.querySelectorAll('.product-row').forEach(row => {
+                const d = row.querySelector('.p-date').value.trim();
+                if (d !== "" && globalDeliveryText === "") {
+                    globalDeliveryText = d;
+                }
+            });
+            
             let isFirstRow = true;
 
             document.querySelectorAll('.product-row').forEach(row => {
@@ -408,7 +417,6 @@
                 const qty = parseInt(row.querySelector('.p-qty').value || 0);
                 const price = parseInt(row.querySelector('.p-price').value || 0);
                 const prQty = parseInt(row.querySelector('.p-prQty').value || 0);
-                const pDateStr = row.querySelector('.p-date').value || "";
                 
                 if (name === "" && qty === 0 && price === 0) return;
 
@@ -417,10 +425,10 @@
                     "數量": qty || "0",
                     "單價": price || "0",
                     "總計": (qty * price) > 0 ? (qty * price).toLocaleString() : "0",
-                    "首批交貨日": isFirstRow ? pDateStr : "" // 隱藏橫線合併法：只有第一筆資料有文字，其餘為空
+                    "首批交貨日": isFirstRow ? globalDeliveryText : "" // 第一筆印文字，其餘為空
                 };
                 items.push(itemData);
-                isFirstRow = false; // 第一列過後改為 false
+                isFirstRow = false; 
                 
                 if (prQty > 0) {
                     pr_items.push({
