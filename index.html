@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>7-11 專屬買賣合約產生器 V1.5</title>
+    <title>7-11 專屬買賣合約產生器 V1.6</title>
     
     <!-- 反快取咒語，強迫瀏覽器抓最新版 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -151,8 +151,8 @@
             <div class="alert alert-success small py-3 mb-3 d-flex align-items-center">
                 <span style="font-size: 1.5rem; margin-right: 12px;">💡</span>
                 <div>
-                    <b>批次快速套用功能升級：</b>交貨日支援下拉選擇「日期」或「文字」，填寫完點擊「一鍵套用」即可自動覆蓋下方所有表格。<br>
-                    若選擇日期，系統會自動轉換為民國年格式！
+                    <b>交貨日期/說明 (自由輸入)：</b>支援填寫「115/08/24」或「一取貨日1-2天前到貨」等文字。<br>
+                    使用上方的「一鍵套用」可以快速將日期或文字填入下方所有的格子中！
                 </div>
             </div>
 
@@ -195,7 +195,6 @@
                     <div class="col-md-2"><label class="form-label text-muted small">數量</label><input type="number" class="form-control p-qty" value="" oninput="calculateTotals()"></div>
                     <div class="col-md-2"><label class="form-label text-muted small">單價(未稅)</label><input type="number" class="form-control p-price" value="" oninput="calculateTotals()"></div>
                     <div class="col-md-2"><label class="form-label text-muted small">公關品數量</label><input type="number" class="form-control p-prQty" value=""></div>
-                    <!-- 🎯 確保這裡是純文字輸入框且空白 -->
                     <div class="col-md-2"><label class="form-label text-muted small">首批交貨日/說明</label><input type="text" class="form-control p-date" value=""></div>
                     <div class="col-md-1 text-center"><span class="remove-btn" onclick="this.closest('.product-row').remove(); calculateTotals();">✖ 刪除</span></div>
                 </div>
@@ -365,7 +364,7 @@
     calculateTotals();
 
     function addProduct(name='', qty='', price='', prQty='', date='') {
-        const html = `<div class="row g-2 mb-3 align-items-end product-row pb-3 border-bottom"><div class="col-md-3"><input type="text" class="form-control p-name" placeholder="品項名稱" value="${name}" oninput="calculateTotals()"></div><div class="col-md-2"><input type="number" class="form-control p-qty" placeholder="數量" oninput="calculateTotals()" value="${qty}"></div><div class="col-md-2"><input type="number" class="form-control p-price" placeholder="單價" oninput="calculateTotals()" value="${price}"></div><div class="col-md-2"><input type="number" class="form-control p-prQty" placeholder="公關品數量" value="${prQty}"></div><div class="col-md-2"><input type="text" class="form-control p-date" value="${date}"></div><div class="col-md-1 text-center"><span class="remove-btn" onclick="this.closest('.product-row').remove(); calculateTotals();">✖ 刪除</span></div></div>`;
+        const html = `<div class="row g-2 mb-3 align-items-end product-row pb-3 border-bottom"><div class="col-md-3"><input type="text" class="form-control p-name" placeholder="品項名稱" value="${name}" oninput="calculateTotals()"></div><div class="col-md-2"><input type="number" class="form-control p-qty" placeholder="數量" oninput="calculateTotals()" value="${qty}"></div><div class="col-md-2"><input type="number" class="form-control p-price" placeholder="單價" oninput="calculateTotals()" value="${price}"></div><div class="col-md-2"><input type="number" class="form-control p-prQty" placeholder="公關品數量" value="${prQty}"></div><div class="col-md-2"><input type="text" class="form-control p-date" placeholder="日期或文字" value="${date}"></div><div class="col-md-1 text-center"><span class="remove-btn" onclick="this.closest('.product-row').remove(); calculateTotals();">✖ 刪除</span></div></div>`;
         document.getElementById('productContainer').insertAdjacentHTML('beforeend', html);
     }
 
@@ -423,23 +422,13 @@
 
             const items = [];
             const pr_items = [];
-            
-            // 找出第一筆有填寫交貨日期的文字，作為合併儲存格的代表文字
-            let globalDeliveryText = "";
-            document.querySelectorAll('.product-row').forEach(row => {
-                const d = row.querySelector('.p-date').value.trim();
-                if (d !== "" && globalDeliveryText === "") {
-                    globalDeliveryText = d;
-                }
-            });
-            
-            let isFirstRow = true;
 
             document.querySelectorAll('.product-row').forEach(row => {
                 const name = row.querySelector('.p-name').value || "";
                 const qty = parseInt(row.querySelector('.p-qty').value || 0);
                 const price = parseInt(row.querySelector('.p-price').value || 0);
                 const prQty = parseInt(row.querySelector('.p-prQty').value || 0);
+                const pDateStr = row.querySelector('.p-date').value || ""; // 抓取每一列的值
                 
                 if (name === "" && qty === 0 && price === 0) return;
 
@@ -448,10 +437,9 @@
                     "數量": qty || "0",
                     "單價": price || "0",
                     "總計": (qty * price) > 0 ? (qty * price).toLocaleString() : "0",
-                    "首批交貨日": isFirstRow ? globalDeliveryText : "" // 第一筆印文字，其餘為空
+                    "首批交貨日": pDateStr // 直接把每一列的值寫入，不再只留第一列
                 };
                 items.push(itemData);
-                isFirstRow = false; 
                 
                 if (prQty > 0) {
                     pr_items.push({

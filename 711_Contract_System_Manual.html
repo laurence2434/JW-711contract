@@ -16,7 +16,6 @@
         li { margin-bottom: 8px; }
         .note { background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px 20px; margin: 30px 0 10px 0; border-radius: 0 8px 8px 0; color: #166534; }
         .highlight-note { background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px 20px; margin: 30px 0 10px 0; border-radius: 0 8px 8px 0; color: #1e40af; }
-        .warning-note { background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 20px 0; border-radius: 0 8px 8px 0; color: #b45309; }
     </style>
 </head>
 <body>
@@ -55,18 +54,11 @@
             <li>資料列格式：<code>{{#pr_items}}</code> <code>{{品項}}</code> | <code>{{數量}}</code> <code>{{/pr_items}}</code></li>
         </ul>
 
-        <h3>6. 交貨時程表格 (第 9 條) - 【隱藏橫線技巧】</h3>
-        <div class="warning-note">
-            ⚠️ <strong>重要技術提醒：</strong><br>
-            系統會自動把您輸入的交貨日期/說明，填在第一列，下方留白。為了讓表格印出來像一個完美的「大合併儲存格」而不會破圖，請使用以下<strong>「隱藏橫線」</strong>的技巧！
-        </div>
-        <ol>
-            <li>在 Word 中照常畫一個 <strong>3 欄</strong>的表格。</li>
-            <li>標題列輸入：<code>商品名稱</code> | <code>總量 / 個</code> | <code>首批交貨日</code>。</li>
-            <li>資料列（第二列）輸入：<code>{{#items}} {{品項}}</code> | <code>{{數量}}</code> | <code>{{首批交貨日}} {{/items}}</code></li>
-            <li>將「首批交貨日」那一整欄的儲存格反白選起來，到 Word 的「表格設計」>「框線」中，將<strong>「水平內框線」取消勾選</strong>（讓中間的橫線消失）。</li>
-            <li>網頁端程式會自動將您輸入的交貨說明/日期，只印在第一列，下方自動保持空白。視覺上即完美呈現為一個跨列的大合併儲存格！</li>
-        </ol>
+        <h3>6. 交貨時程表格 (第 9 條)</h3>
+        <p>請在表格的資料列加上迴圈指令，保持原本一般的表格框線即可：</p>
+        <ul>
+            <li>資料列格式：<code>{{#items}}</code> <code>{{品項}}</code> | <code>{{數量}}</code> | <code>{{首批交貨日}}</code> <code>{{/items}}</code></li>
+        </ul>
 
         <h3>7. 最後簽名處</h3>
         <ul>
